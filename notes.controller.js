@@ -13,13 +13,17 @@ async function addNote(title) {
   };
   notes.push(note);
 
-  await fs.writeFile(notesPath, JSON.stringify(notes));
+  await saveNotes(notes)
   console.log(chalk.green.inverse("note was added"));
 }
 
 async function getNotes() {
   const notes = await fs.readFile(notesPath, { encoding: "utf-8" });
   return Array.isArray(JSON.parse(notes)) ? JSON.parse(notes) : [];
+}
+
+async function saveNotes(notes) {
+  await fs.writeFile(notesPath, JSON.stringify(notes));
 }
 
 async function printNotes() {
@@ -33,12 +37,27 @@ async function printNotes() {
 
 async function removeNote(id) {
   const notes = await getNotes();
-  fs.writeFile(notesPath, JSON.stringify(notes.filter((note) => note.id !== id)));
+  const removed = notes.filter((note) => note.id !== id);
+  await saveNotes(removed);
   console.log(chalk.red.inverse(`Removed  note by Id: ${id}`));
+}
+
+async function updateNote(noteData) {
+  const notes = await getNotes();
+  const index = notes.findIndex((note) => note.id === noteData.id);
+  if (index >= 0) {
+    notes[index] = { ...notes[index], ...noteData };
+    await saveNotes(notes);
+    console.log(
+      chalk.bgGreen(`Note with id="${noteData.id}" has been updated!`)
+    );
+  }
 }
 
 module.exports = {
   addNote,
   printNotes,
   removeNote,
+  getNotes,
+  updateNote,
 };
